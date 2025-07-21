@@ -6,11 +6,11 @@ import os
 
 app = Flask(__name__)
 
-#  Updated API URL with token
+# Updated API URL with token
 API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01&preshared_token=8rtpv5gm-dywJH%7C_%5B"
 
 TEMPLATE_FILE = "AR_Template_API.xlsx"
-SHEET_NAME = "DataSheet"  # Change if needed
+SHEET_NAME = "Data Sheet"  # Change if needed
 
 COLUMN_MAP = {
     "invoicenum": "A",
@@ -60,5 +60,7 @@ def download_ar():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+#This is required for Render to detect your open port
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Render provides PORT env variable
+    app.run(host="0.0.0.0", port=port)
