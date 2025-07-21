@@ -8,7 +8,7 @@ from openpyxl.utils import column_index_from_string
 app = Flask(__name__)
 
 # Constants
-API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01"
+API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01&preshared_token=8rtpv5gm-dywJH%7C_%5B"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, "AR_Template_API.xlsx")
