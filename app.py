@@ -9,8 +9,10 @@ app = Flask(__name__)
 
 # Constants
 API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01"
-TEMPLATE_PATH = "AR_Template_API.xlsx"
-OUTPUT_PATH = "NEW_AR_Report.xlsx"
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_PATH = os.path.join(BASE_DIR, "AR_Template_API.xlsx")
+OUTPUT_PATH = os.path.join(BASE_DIR , "NEW_AR_Report.xlsx")
 
 
 COLUMN_MAP = {
@@ -31,25 +33,28 @@ COLUMN_MAP = {
 
 @app.route("/")
 def download_excel():
-    # Step 1: Fetch data from API
-    response = requests.get(API_URL)
-    data = response.json()
+    try:
+        response = requests.get(API_URL)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print("API error:", e)
+        return "Failed to fetch or parse API data", 500
 
-    # Step 2: Copy the template
+    if not os.path.exists(TEMPLATE_PATH):
+        print("Excel template not found!")
+        return "Excel template not found", 500
+
     shutil.copy(TEMPLATE_PATH, OUTPUT_PATH)
-
-    # Step 3: Load the workbook
     wb = openpyxl.load_workbook(OUTPUT_PATH)
     ws = wb.active
 
-    # Step 4: Write the data to correct columns
     start_row = 2
     for i, record in enumerate(data, start=start_row):
-        for field, col_letter in COLUMN_MAP.items():
+        for col_letter, field in COLUMN_MAP.items():
             col_index = column_index_from_string(col_letter)
             ws.cell(row=i, column=col_index, value=record.get(field))
 
-    # Step 5: Save and send file
     wb.save(OUTPUT_PATH)
     return send_file(OUTPUT_PATH, as_attachment=True)
 
