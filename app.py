@@ -53,8 +53,8 @@ def download_excel():
         data = response.json()
 
         print("Original record count:", len(data))
-        data = data[:100]
-        print("Trimmed to first 100 records.")
+        data = data[:25]
+        print("Trimmed to first 25 records.")
 
     except Exception as e:
         print("API error:", e)
