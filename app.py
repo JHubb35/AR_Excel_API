@@ -4,16 +4,19 @@ import shutil
 import os
 import openpyxl
 from openpyxl.utils import column_index_from_string
+import uuid
 
 app = Flask(__name__)
 
-# Constants
-API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01&preshared_token=8rtpv5gm-dywJH%7C_%5B"
+# Get API URL from environment variable
+API_URL = os.environ.get("AR_API_URL")
 
+# Define Excel template file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_PATH = os.path.join(BASE_DIR, "AR_Template_API.xlsx")
-OUTPUT_PATH = os.path.join(BASE_DIR , "NEW_AR_Report.xlsx")
+TEMPLATE_FILENAME = "AR_Template_API.xlsx"
+TEMPLATE_PATH = os.path.join(BASE_DIR, TEMPLATE_FILENAME)
 
+# Define mapping of Excel columns to API fields
 COLUMN_MAP = {
     "A": "invoicenum",
     "B": "custponum",
@@ -33,10 +36,17 @@ COLUMN_MAP = {
 def home():
     return "Welcome to the AR API Excel generator!"
 
+@app.route("/health")
+def health():
+    return "OK", 200
+
 @app.route("/download-ar", methods=["GET"])
 def download_excel():
+    if not API_URL:
+        return jsonify({"error": "API URL is not configured"}), 500
+
     try:
-        # Fetch API data
+        # Fetch data from API
         response = requests.get(API_URL)
         response.raise_for_status()
         data = response.json()
@@ -45,11 +55,16 @@ def download_excel():
         return jsonify({"error": "Failed to fetch or parse API data"}), 500
 
     if not os.path.exists(TEMPLATE_PATH):
-        return jsonify({"error": "Excel template not found"}), 500
+        return jsonify({"error": f"Excel template '{TEMPLATE_FILENAME}' not found"}), 500
 
     try:
-        shutil.copy(TEMPLATE_PATH, OUTPUT_PATH)
-        wb = openpyxl.load_workbook(OUTPUT_PATH)
+        # Create a unique output filename
+        output_filename = f"AR_Report_{uuid.uuid4().hex[:8]}.xlsx"
+        output_path = os.path.join(BASE_DIR, output_filename)
+
+        # Copy the template and write data
+        shutil.copy(TEMPLATE_PATH, output_path)
+        wb = openpyxl.load_workbook(output_path)
         ws = wb.active
 
         start_row = 2
@@ -58,13 +73,13 @@ def download_excel():
                 col_index = column_index_from_string(col_letter)
                 ws.cell(row=i, column=col_index, value=record.get(field))
 
-        wb.save(OUTPUT_PATH)
-        return send_file(OUTPUT_PATH, as_attachment=True)
+        wb.save(output_path)
+        return send_file(output_path, as_attachment=True)
 
     except Exception as e:
         print("Excel generation error:", e)
         return jsonify({"error": "Failed to generate Excel file"}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # 8080 is Fly.io standard
+    port = int(os.environ.get("PORT", 8080))  # For Railway or local
     app.run(host="0.0.0.0", port=port)
