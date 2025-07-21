@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 # Get API URL from environment variable
 API_URL = os.environ.get("AR_API_URL")
+print("Loaded API_URL:", API_URL)
 
 # Define Excel template file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
