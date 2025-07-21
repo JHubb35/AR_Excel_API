@@ -51,6 +51,11 @@ def download_excel():
         response = requests.get(API_URL)
         response.raise_for_status()
         data = response.json()
+
+        print("Original record count:", len(data))
+        data = data[:100]
+        print("Trimmed to first 100 records.")
+
     except Exception as e:
         print("API error:", e)
         return jsonify({"error": "Failed to fetch or parse API data"}), 500
