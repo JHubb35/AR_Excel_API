@@ -1,87 +1,69 @@
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_file
 import requests
-import shutil
+from openpyxl import load_workbook
+from io import BytesIO
 import os
-import openpyxl
-from openpyxl.utils import column_index_from_string
-import uuid
 
 app = Flask(__name__)
 
-# Get API URL from environment variable
-API_URL = os.environ.get("AR_API_URL")
-print("Loaded API_URL:", API_URL)
+# API endpoint with preshared token
+API_URL = "https://reasolllc.cetecerp.com/api/invoice?invoicedate_from=2023:01:01&preshared_token=8rtpv5gm-dywJH%7C_%5B"
 
-# Define Excel template file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_FILENAME = "AR_Template_API.xlsx"
-TEMPLATE_PATH = os.path.join(BASE_DIR, TEMPLATE_FILENAME)
+TEMPLATE_FILE = "AR_Template_API.xlsx"
+SHEET_NAME = "Sheet1"
 
-# Define mapping of Excel columns to API fields
 COLUMN_MAP = {
-    "A": "invoicenum",
-    "B": "custponum",
-    "C": "invoice__bc",
-    "D": "invoicedate",
-    "E": "ar_duedate",
-    "F": "paid_on",
-    "I": "terms_desc",
-    "K": "invoice_tax_subtotal",
-    "M": "paid",
-    "O": "total_invoice_amount",
-    "Q": "ar_status",
-    "R": "invoicedate"  
+    "invoicenum": "A",
+    "custponum": "B",
+    "invoice__bc": "C",
+    "invoicedate": "D",
+    "ar_duedate": "E",
+    "paid_on": "F",
+    "terms_desc": "I",
+    "invoice_tax_subtotal": "K",
+    "paid": "M",
+    "total_invoice_amount": "O",
+    "ar_status": "Q",
+    "invoicedate": "R",
 }
+
+def fetch_data():
+    response = requests.get(API_URL)
+    response.raise_for_status()
+    return response.json()["data"]
+
+def generate_excel(data):
+    wb = load_workbook(TEMPLATE_FILE)
+    ws = wb[SHEET_NAME]
+
+    for i, row in enumerate(data, start=2):
+        for key, col in COLUMN_MAP.items():
+            ws[f"{col}{i}"] = row.get(key, "")
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
 
 @app.route("/")
 def home():
-    return "Welcome to the AR API Excel generator!"
+    return "AR Excel Export API is live. Visit /download-ar to download the latest Excel report."
 
-@app.route("/health")
-def health():
-    return "OK", 200
-
-@app.route("/download-ar", methods=["GET"])
-def download_excel():
-    if not API_URL:
-        return jsonify({"error": "API URL is not configured"}), 500
-
+@app.route("/download-ar")
+def download_ar():
     try:
-        # Fetch data from API
-        response = requests.get(API_URL)
-        response.raise_for_status()
-        data = response.json()
-        
+        data = fetch_data()
+        excel_file = generate_excel(data)
+        return send_file(
+            excel_file,
+            as_attachment=True,
+            download_name="AR_Report.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     except Exception as e:
-        print("API error:", e)
-        return jsonify({"error": "Failed to fetch or parse API data"}), 500
+        return {"error": str(e)}, 500
 
-    if not os.path.exists(TEMPLATE_PATH):
-        return jsonify({"error": f"Excel template '{TEMPLATE_FILENAME}' not found"}), 500
-
-    try:
-        # Create a unique output filename
-        output_filename = f"AR_Report_{uuid.uuid4().hex[:8]}.xlsx"
-        output_path = os.path.join(BASE_DIR, output_filename)
-
-        # Copy the template and write data
-        shutil.copy(TEMPLATE_PATH, output_path)
-        wb = openpyxl.load_workbook(output_path)
-        ws = wb.active
-
-        start_row = 2
-        for i, record in enumerate(data, start=start_row):
-            for col_letter, field in COLUMN_MAP.items():
-                col_index = column_index_from_string(col_letter)
-                ws.cell(row=i, column=col_index, value=record.get(field))
-
-        wb.save(output_path)
-        return send_file(output_path, as_attachment=True)
-
-    except Exception as e:
-        print("Excel generation error:", e)
-        return jsonify({"error": "Failed to generate Excel file"}), 500
-
+# For Railway (PORT is usually injected via env)
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # For Railway or local
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
