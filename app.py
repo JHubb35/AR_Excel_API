@@ -30,7 +30,7 @@ COLUMN_MAP = {
 def fetch_data():
     response = requests.get(API_URL)
     response.raise_for_status()
-    return response.json()["data"]
+    return response.json()
 
 def generate_excel(data):
     wb = load_workbook(TEMPLATE_FILE)
