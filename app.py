@@ -24,7 +24,6 @@ COLUMN_MAP = {
     "paid": "M",
     "total_invoice_amount": "O",
     "ar_status": "Q",
-    "invoicedate": "R",
 }
 
 def fetch_data():
