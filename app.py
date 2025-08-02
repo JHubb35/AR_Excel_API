@@ -63,16 +63,31 @@ def download_excel():
         ws[f"I{row_num}"] = item.get("terms_desc")
         ws[f"Q{row_num}"] = item.get("ar_status")
 
-        for col_letter, field, cell_letter in [("K", "invoice_tax_subtotal", 'K'),
-                                               ("M", "paid", 'M'),
-                                               ("O", "total_invoice_amount", 'O')]:
-            try:
-                value = float(item.get(field, 0))
-            except:
-                value = None
-            cell = ws[f"{cell_letter}{row_num}"]
-            cell.value = value
-            cell.number_format = '"$"#,##0.00'
+        # Column K - Tax Subtotal
+        k_cell = ws[f"K{row_num}"]
+        try:
+            k_cell.value = float(item.get("invoice_tax_subtotal", 0))
+        except:
+            k_cell.value = None
+        k_cell.number_format = '"$"#,##0.00'
+
+        
+        # Column M - Paid
+        m_cell = ws[f"M{row_num}"]
+        try:
+            m_cell.value = float(item.get("paid", 0))
+        except:
+            m_cell.value = None
+        m_cell.number_format = '"$"#,##0.00'
+
+        # Column O - Total Invoice Amount
+        o_cell = ws[f"O{row_num}"]
+        try:
+            o_cell.value = float(item.get("total_invoice_amount", 0))
+        except:
+            o_cell.value = None
+        o_cell.number_format = '"$"#,##0.00'
+
 
         # CIPS extra fields
         if invoice_bc in cips_map:
