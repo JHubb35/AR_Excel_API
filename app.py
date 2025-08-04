@@ -22,7 +22,7 @@ CIPS_PATH = os.path.join(BASE_DIR, CIPS_FILENAME)
 def home():
     return "AR Sync API is running. Visit /download to get the Excel report."
 
-@app.route("/download-ar-report")
+@app.route("/download-ar")
 def download_excel():
     # --- Step 1: Load API Data ---
     response = requests.get(API_URL)
