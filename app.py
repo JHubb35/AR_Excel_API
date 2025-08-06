@@ -66,7 +66,7 @@ def download_excel():
         # Column K - Tax Subtotal
         k_cell = ws[f"K{row_num}"]
         try:
-            k_cell.value = float(item.get("invoice_tax_subtotal", 0))
+            k_cell.value = float(item.get("total_invoice_amount_in_home_curr", 0))
         except:
             k_cell.value = None
         k_cell.number_format = '"$"#,##0.00'
