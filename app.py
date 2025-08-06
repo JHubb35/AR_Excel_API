@@ -52,6 +52,9 @@ def download_excel():
     # --- Step 4: Write Data to Excel ---
     row_num = 2
     for item in api_data:
+        if item.get("ar_status", "").strip().lower() != "open":
+            continue
+
         invoice_bc = str(item.get("invoice__bc", "")).strip().lower()
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
