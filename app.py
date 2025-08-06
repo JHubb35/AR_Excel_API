@@ -18,22 +18,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, TEMPLATE_FILENAME)
 CIPS_PATH = os.path.join(BASE_DIR, CIPS_FILENAME)
 
-# ========== Company Name Filter ==========
+## ========== Helper Function ==========
 def is_real_company_name(name):
     if not name:
         return False
     name = name.strip()
 
-    # Must be longer than 25 characters
-    if len(name) < 25:
+    if len(name) < 30:
+        return False
+    if len(name.split()) < 3:
         return False
 
-    # Must contain a space
-    if " " not in name:
-        return False
-
-    # Must include known company identifiers
-    company_keywords = [
+        company_keywords = [
         "company", "limited", "ltd", "inc", "corp", "corporation",
         "group", "llc", "co", "pte", "sarl", "bv", "gmbh", "content"
     ]
@@ -41,11 +37,7 @@ def is_real_company_name(name):
     if not any(keyword in name_lower for keyword in company_keywords):
         return False
 
-    # Optional: exclude if it looks like a code and has few words
-    if re.fullmatch(r"[A-Z0-9 ,.&-]+", name) and len(name.split()) <= 2:
-        return False
-
-    return True
+        return True
 
 # ========== Routes ==========
 @app.route("/")
@@ -85,15 +77,21 @@ def download_excel():
         if item.get("ar_status", "").strip().lower() != "open":
             continue
 
-        name_value = str(item.get("name", "")).strip()
-        if not is_real_company_name(name_value):
-            continue  # Skip if name is a number
+
 
         invoice_bc = str(item.get("invoice__bc", "")).strip().lower()
+        name_value = str(item.get("name", "")).strip()
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
         ws[f"B{row_num}"] = item.get("custponum")
-        ws[f"C{row_num}"] = item.get("name")
+
+    if is_real_company_name(name_value):
+        ws[f"C{row_num}"] = name_value
+        print(f"Accepted name: {name_value}")
+    else:
+        ws[f"C{row_num}"] = ""
+        print(f"Rejected name: {name_value}")
+
         ws[f"D{row_num}"] = item.get("custnum")
         ws[f"E{row_num}"] = item.get("invoice__bc")
         ws[f"F{row_num}"] = item.get("invoicedate")
