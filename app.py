@@ -5,6 +5,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import numbers
 from io import BytesIO
 import os
+import re
 
 app = Flask(__name__)
 
@@ -16,6 +17,35 @@ CIPS_FILENAME = "cips_data.xlsx"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, TEMPLATE_FILENAME)
 CIPS_PATH = os.path.join(BASE_DIR, CIPS_FILENAME)
+
+# ========== Company Name Filter ==========
+def is_real_company_name(name):
+    if not name:
+        return False
+    name = name.strip()
+
+    # Must be longer than 25 characters
+    if len(name) < 25:
+        return False
+
+    # Must contain a space
+    if " " not in name:
+        return False
+
+    # Must include known company identifiers
+    company_keywords = [
+        "company", "limited", "ltd", "inc", "corp", "corporation",
+        "group", "llc", "co", "pte", "sarl", "bv", "gmbh", "content"
+    ]
+    name_lower = name.lower()
+    if not any(keyword in name_lower for keyword in company_keywords):
+        return False
+
+    # Optional: exclude if it looks like a code and has few words
+    if re.fullmatch(r"[A-Z0-9 ,.&-]+", name) and len(name.split()) <= 2:
+        return False
+
+    return True
 
 # ========== Routes ==========
 @app.route("/")
