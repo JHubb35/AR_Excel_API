@@ -60,7 +60,16 @@ def download_excel():
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
         ws[f"B{row_num}"] = item.get("custponum")
-        ws[f"C{row_num}"] = item.get("name")
+
+        valid_names = [
+            "CABINDA GULF OIL COMPANY LIMITED, REPUBLIC OF ANGOLA",
+            "CABINDA GULF OIL COMPANY LTD, LOCAL CONTENT"
+        ]
+        name_value = item.get("name", "").strip()
+        if name_value in valid_names:
+            ws[f"C{row_num}"] = name_value
+        else:
+            ws[f"C{row_num}"] = ""
         ws[f"D{row_num}"] = item.get("custnum")
         ws[f"E{row_num}"] = item.get("invoice__bc")
         ws[f"F{row_num}"] = item.get("invoicedate")
