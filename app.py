@@ -5,7 +5,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import numbers
 from io import BytesIO
 import os
-import re
 
 app = Flask(__name__)
 
@@ -17,27 +16,6 @@ CIPS_FILENAME = "cips_data.xlsx"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, TEMPLATE_FILENAME)
 CIPS_PATH = os.path.join(BASE_DIR, CIPS_FILENAME)
-
-## ========== Helper Function ==========
-def is_real_company_name(name):
-    if not name:
-        return False
-    name = name.strip()
-
-    if len(name) < 30:
-        return False
-    if len(name.split()) < 3:
-        return False
-
-        company_keywords = [
-        "company", "limited", "ltd", "inc", "corp", "corporation",
-        "group", "llc", "co", "pte", "sarl", "bv", "gmbh", "content"
-    ]
-    name_lower = name.lower()
-    if not any(keyword in name_lower for keyword in company_keywords):
-        return False
-
-        return True
 
 # ========== Routes ==========
 @app.route("/")
@@ -74,24 +52,15 @@ def download_excel():
     # --- Step 4: Write Data to Excel ---
     row_num = 2
     for item in api_data:
+        # ✅ Only include orders with "open" status
         if item.get("ar_status", "").strip().lower() != "open":
             continue
 
-
-
         invoice_bc = str(item.get("invoice__bc", "")).strip().lower()
-        name_value = str(item.get("name", "")).strip()
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
         ws[f"B{row_num}"] = item.get("custponum")
-
-    if is_real_company_name(name_value):
-        ws[f"C{row_num}"] = name_value
-        print(f"Accepted name: {name_value}")
-    else:
-        ws[f"C{row_num}"] = ""
-        print(f"Rejected name: {name_value}")
-
+        ws[f"C{row_num}"] = item.get("name")
         ws[f"D{row_num}"] = item.get("custnum")
         ws[f"E{row_num}"] = item.get("invoice__bc")
         ws[f"F{row_num}"] = item.get("invoicedate")
@@ -108,7 +77,6 @@ def download_excel():
             k_cell.value = None
         k_cell.number_format = '"$"#,##0.00'
 
-        
         # Column M - Paid
         m_cell = ws[f"O{row_num}"]
         try:
@@ -124,7 +92,6 @@ def download_excel():
         except:
             o_cell.value = None
         o_cell.number_format = '"$"#,##0.00'
-
 
         # CIPS extra fields
         if invoice_bc in cips_map:
