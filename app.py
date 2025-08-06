@@ -55,6 +55,10 @@ def download_excel():
         if item.get("ar_status", "").strip().lower() != "open":
             continue
 
+        name_value = str(item.get("name", "")).strip()
+        if name_value.isdigit():
+            continue  # Skip if name is a number
+
         invoice_bc = str(item.get("invoice__bc", "")).strip().lower()
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
