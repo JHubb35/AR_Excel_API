@@ -86,7 +86,7 @@ def download_excel():
             continue
 
         name_value = str(item.get("name", "")).strip()
-        if name_value.isdigit():
+        if not is_real_company_name(name_value):
             continue  # Skip if name is a number
 
         invoice_bc = str(item.get("invoice__bc", "")).strip().lower()
