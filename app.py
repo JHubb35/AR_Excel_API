@@ -56,15 +56,17 @@ def download_excel():
 
         ws[f"A{row_num}"] = str(item.get("invoicenum", ""))
         ws[f"B{row_num}"] = item.get("custponum")
-        ws[f"C{row_num}"] = item.get("invoice__bc")
-        ws[f"D{row_num}"] = item.get("invoicedate")
-        ws[f"E{row_num}"] = item.get("ar_duedate")
-        ws[f"F{row_num}"] = item.get("paid_on")
-        ws[f"I{row_num}"] = item.get("terms_desc")
-        ws[f"Q{row_num}"] = item.get("ar_status")
+        ws[f"C{row_num}"] = item.get("name")
+        ws[f"D{row_num}"] = item.get("custnum")
+        ws[f"E{row_num}"] = item.get("invoice__bc")
+        ws[f"F{row_num}"] = item.get("invoicedate")
+        ws[f"G{row_num}"] = item.get("ar_duedate")
+        ws[f"H{row_num}"] = item.get("paid_on")
+        ws[f"K{row_num}"] = item.get("terms_desc")
+        ws[f"S{row_num}"] = item.get("ar_status")
 
         # Column K - Tax Subtotal
-        k_cell = ws[f"K{row_num}"]
+        k_cell = ws[f"M{row_num}"]
         try:
             k_cell.value = float(item.get("total_invoice_amount_in_home_curr", 0))
         except:
@@ -73,7 +75,7 @@ def download_excel():
 
         
         # Column M - Paid
-        m_cell = ws[f"M{row_num}"]
+        m_cell = ws[f"O{row_num}"]
         try:
             m_cell.value = float(item.get("paid", 0))
         except:
@@ -81,7 +83,7 @@ def download_excel():
         m_cell.number_format = '"$"#,##0.00'
 
         # Column O - Total Invoice Amount
-        o_cell = ws[f"O{row_num}"]
+        o_cell = ws[f"Q{row_num}"]
         try:
             o_cell.value = float(item.get("total_invoice_amount", 0))
         except:
@@ -92,19 +94,19 @@ def download_excel():
         # CIPS extra fields
         if invoice_bc in cips_map:
             cips_data = cips_map[invoice_bc]
-            ws[f"R{row_num}"] = cips_data["receipt_date"]
-            ws[f"T{row_num}"] = cips_data["expected_date"]
+            ws[f"T{row_num}"] = cips_data["receipt_date"]
+            ws[f"V{row_num}"] = cips_data["expected_date"]
         else:
             print(f"No match for invoice__bc: {invoice_bc}")    
 
         # --- Step 5: Formulas ---
-        ws.cell(row=row_num, column=7).value  = f'=IF(ISBLANK(D{row_num}), "", TODAY()-D{row_num})'   # G
-        ws.cell(row=row_num, column=8).value  = f'=IF(ISBLANK(D{row_num}), "", IF(G{row_num}<30, "<30", IF(G{row_num}<60, ">30", IF(G{row_num}<90, ">60", IF(G{row_num}<120, ">90", IF(G{row_num}<180, ">120", ">180"))))))'  # H
-        ws.cell(row=row_num, column=10).value = f'=IF(ISBLANK(E{row_num}), "", TODAY()-E{row_num})'  # J
-        ws.cell(row=row_num, column=12).value = f'=IF(ISBLANK(K{row_num}), "", "USD")'               # L
+        ws.cell(row=row_num, column=9).value  = f'=IF(ISBLANK(F{row_num}), "", TODAY()-F{row_num})'   # I
+        ws.cell(row=row_num, column=10).value  = f'=IF(ISBLANK(F{row_num}), "", IF(I{row_num}<30, "<30", IF(I{row_num}<60, ">30", IF(I{row_num}<90, ">60", IF(I{row_num}<120, ">90", IF(I{row_num}<180, ">120", ">180"))))))'  # J
+        ws.cell(row=row_num, column=12).value = f'=IF(ISBLANK(G{row_num}), "", TODAY()-G{row_num})'  # L
         ws.cell(row=row_num, column=14).value = f'=IF(ISBLANK(M{row_num}), "", "USD")'               # N
         ws.cell(row=row_num, column=16).value = f'=IF(ISBLANK(O{row_num}), "", "USD")'               # P
-        ws.cell(row=row_num, column=19).value = f'=IF(A{row_num}="", "", IF(R{row_num}="", "No", "Yes"))'  # S
+        ws.cell(row=row_num, column=18).value = f'=IF(ISBLANK(Q{row_num}), "", "USD")'               # R
+        ws.cell(row=row_num, column=21).value = f'=IF(A{row_num}="", "", IF(T{row_num}="", "No", "Yes"))'  # U
 
         row_num += 1
 
