@@ -40,7 +40,9 @@ def download_excel():
     cips_map = {
         row["invoice__bc"]: {
             "receipt_date": row["Invoice Receipt Date"],
-            "expected_date": row["Expected Payment Date"]
+            "expected_date": row["Expected Payment Date"],
+            "settlment_date": row["Settlment Date"],
+            "payment_number": row["Payment Number"]
         }
         for _, row in cips_df.iterrows()
     }
@@ -70,6 +72,7 @@ def download_excel():
             ws[f"C{row_num}"] = name_value
         else:
             ws[f"C{row_num}"] = ""
+            
         ws[f"D{row_num}"] = item.get("custnum")
         ws[f"E{row_num}"] = item.get("invoice__bc")
         ws[f"F{row_num}"] = item.get("invoicedate")
@@ -106,7 +109,9 @@ def download_excel():
         if invoice_bc in cips_map:
             cips_data = cips_map[invoice_bc]
             ws[f"T{row_num}"] = cips_data["receipt_date"]
-            ws[f"V{row_num}"] = cips_data["expected_date"]
+            ws[f"U{row_num}"] = cips_data["expected_date"]
+            ws[f"V{row_num}"] = cips_data["settlment_date"]
+            ws[f"W{row_num}"] = cips_data["paymnet_number"]
         else:
             print(f"No match for invoice__bc: {invoice_bc}")    
 
@@ -117,7 +122,7 @@ def download_excel():
         ws.cell(row=row_num, column=14).value = f'=IF(ISBLANK(M{row_num}), "", "USD")'               # N
         ws.cell(row=row_num, column=16).value = f'=IF(ISBLANK(O{row_num}), "", "USD")'               # P
         ws.cell(row=row_num, column=18).value = f'=IF(ISBLANK(Q{row_num}), "", "USD")'               # R
-        ws.cell(row=row_num, column=21).value = f'=IF(A{row_num}="", "", IF(T{row_num}="", "No", "Yes"))'  # U
+        ws.cell(row=row_num, column=24).value = f'=IF(A{row_num}="", "", IF(T{row_num}="", "No", "Yes"))'  # U
 
         row_num += 1
 
